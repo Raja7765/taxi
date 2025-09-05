@@ -13,7 +13,7 @@ exports.bookRide = async (req, res) => {
     const fare = calculateFare();
     const result = await pool.query(
       "INSERT INTO rides (rider_id, pickup, dropoff, fare, status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [riderId, pickup, dropoff, fare, "requested"]
+      [riderId, pickup, dropoff, fare, "pending"]
     );
 
     res.status(201).json({ message: "Ride booked successfully", ride: result.rows[0] });
