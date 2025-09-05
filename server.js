@@ -39,6 +39,8 @@ pool.connect()
   .catch((err) => console.error(" DB connection error:", err));
 
 
+
+
 //jwt Middleware
 function authenticateToken(req,res,next){
   const authHeader = req.headers["authorization"];
@@ -63,6 +65,8 @@ function authenticateToken(req,res,next){
 app.get("/", (req, res) => {
   res.send("Taxi Booking Backend is running...");
 })
+
+
 
 // Signup
 app.post("/signup", async (req, res) => {
@@ -113,8 +117,32 @@ app.post("/login", async (req, res) => {
   }
 });
 
+//booking the ride 
+app.post("/rides", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "rider") {
+      return res.status(403).json({ error: "Only riders can book rides" });
+    }
 
+    const { pickup, dropoff } = req.body;
 
+    const baseFare = 50;
+    const ratePerKm = 15;
+    const distance = Math.floor(Math.random() * 15) + 1; 
+    const fare = baseFare + distance * ratePerKm;
+
+    const result = await pool.query(
+      "INSERT INTO rides (rider_id, pickup, dropoff, fare, status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [req.user.id, pickup, dropoff, fare, "pending"]
+    );
+    res.status(201).json({
+      message: "Ride booked successfully",
+      ride: result.rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 
