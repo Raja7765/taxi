@@ -13,6 +13,12 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+app.get("/profile",authenticateToken,(req,res) =>{
+  res.json({
+    message:"This is your profile",
+    user:req.user
+  });
+})
 
 
 
@@ -32,6 +38,22 @@ pool.connect()
   .then(() => console.log("Connected to PostgreSQL"))
   .catch((err) => console.error(" DB connection error:", err));
 
+
+//jwt Middleware
+function authenticateToken(req,res,next){
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) return res.status(401).json({ error:"Access denied, token missing"});
+
+  jwt.verify(token, process.env.JWT_SECRET,(err,user) =>{
+    if(err) return res.status(403).json({
+      error:"Invalid token"
+    });
+    req.user = user;
+    next();
+  });
+}
 
 
 
@@ -60,6 +82,12 @@ app.post("/signup", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
+
+
+
 
 // Login
 app.post("/login", async (req, res) => {
