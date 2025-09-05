@@ -1,40 +1,16 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const {Pool} = require('pg');
+const express = require("express");
+const bodyParser = require("body-parser");
+require("dotenv").config();
 
+const authRoutes = require("./routes/authRoutes");
+const rideRoutes = require("./routes/rideRoutes");
 
-//Load dotenv file 
-dotenv.config();
 const app = express();
+app.use(bodyParser.json());
 
-//middleware
-app.use(express.json());
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/rides", rideRoutes);
 
-//Postgres Pool
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-});
-
-//test db connection
-pool.connect()
-.then(() => console.log('Database connected successfully'))
-.catch(err => console.error('Database connection error', err.stack));
-
-
-
-//Routes
-app.get('/', (req, res) => {
-    res.send('Taxi Service is running');
-});
-
-
-
-// Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-}); 
-
-
-module.exports = app;
+app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
