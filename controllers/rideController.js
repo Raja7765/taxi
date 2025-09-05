@@ -21,3 +21,20 @@ exports.bookRide = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+
+// get all rides for login rider
+exports.getMyRides = async (req,res) => {
+    const riderId = req.user.id;
+    try{
+        const result = await pool.query(
+            "SELECT * FROM rides WHERE rider_id = $1 ORDER BY created_at DESC",
+            [riderId]
+        );
+
+        res.json({ rides: result.rows});
+    } catch (err){
+        res.status(500).json({error: err.message});
+    }
+};
