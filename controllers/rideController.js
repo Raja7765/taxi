@@ -6,7 +6,7 @@ function calculateFare() {
 }
 
 // Book Ride
-exports.bookRide = async (req, res) => {
+const bookRide = async (req, res) => {
   const { pickup, dropoff } = req.body;
   const riderId = req.user.id; // from JWT
   try {
@@ -25,7 +25,7 @@ exports.bookRide = async (req, res) => {
 
 
 // get all rides for login rider
-exports.getMyRides = async (req,res) => {
+const getMyRides = async (req,res) => {
     const riderId = req.user.id;
     try{
         const result = await pool.query(
@@ -38,3 +38,6 @@ exports.getMyRides = async (req,res) => {
         res.status(500).json({error: err.message});
     }
 };
+
+
+module.exports = { bookRide,getMyRides};
