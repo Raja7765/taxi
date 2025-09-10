@@ -3,17 +3,29 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken")
 
 
-// Driver Registration
+
+//Driver register
 const registerDriver = async (req, res) => {
-  const { name, email, password, license_number, vehicle_number } = req.body;
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { user_id, license_no, vehicle_no } = req.body;
+
+    // Ensure user exists
+    const userCheck = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+    if (userCheck.rows.length === 0) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    // Insert into drivers
     const result = await pool.query(
-      "INSERT INTO drivers (name,email,password,license_number,vehicle_number,status) VALUES ($1,$2,$3,$4,$5,'available') RETURNING *",
-      [name, email, hashedPassword, license_number, vehicle_number]
+      `INSERT INTO drivers (user_id, license_no, vehicle_no) 
+       VALUES ($1, $2, $3) RETURNING *`,
+      [user_id, license_no, vehicle_no]
     );
 
-    res.status(201).json({ message: "Driver registered", driver: result.rows[0] });
+    res.status(201).json({
+      message: "Driver registered successfully",
+      driver: result.rows[0],
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -21,25 +33,37 @@ const registerDriver = async (req, res) => {
 
 
 
-
-//  Driver Login
+// Driver Login
 const loginDriver = async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const result = await pool.query("SELECT * FROM drivers WHERE email=$1", [email]);
+    const { email, password } = req.body;
+
+    const result = await pool.query(
+      `SELECT d.driver_id, d.user_id, u.password 
+       FROM drivers d 
+       JOIN users u ON d.user_id = u.id 
+       WHERE u.email = $1`,
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+
     const driver = result.rows[0];
-    if (!driver) return res.status(400).json({ error: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, driver.password);
-    if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
 
     const token = jwt.sign(
-      { id: driver.id, role: "driver" },
+      { driver_id: driver.driver_id, user_id: driver.user_id, role: "driver" },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Driver login successful", token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -48,7 +72,8 @@ const loginDriver = async (req, res) => {
 
 
 
-// 🚖 Get Available Rides
+
+//  Get Available Rides
 const getAvailableRides = async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM rides WHERE status='requested'");
@@ -60,22 +85,34 @@ const getAvailableRides = async (req, res) => {
 
 
 
+//accepting the ride
 
 
-
-//  Accept Ride
 const acceptRide = async (req, res) => {
-  const { ride_id } = req.body;
   try {
-    const result = await pool.query(
-      "UPDATE rides SET driver_id=$1, status='accepted' WHERE ride_id=$2 RETURNING *",
-      [req.driver.id, ride_id]
+    if (!req.body || !req.body.ride_id) {
+      return res.status(400).json({ error: "ride_id is required in request body" });
+    }
+
+    const { ride_id } = req.body;
+    const driver_id = req.driver?.driver_id;
+
+    if (!driver_id) {
+      return res.status(403).json({ error: "Driver authentication failed" });
+    }
+
+    // Update ride status
+    await pool.query(
+      "UPDATE rides SET driver_id = $1, status = 'accepted' WHERE ride_id = $2",
+      [driver_id, ride_id]
     );
-    res.json({ message: "Ride accepted", ride: result.rows[0] });
+
+    res.json({ message: "Ride accepted successfully", ride_id, driver_id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 
