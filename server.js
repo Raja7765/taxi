@@ -12,9 +12,9 @@ const app = express();
 app.use(express.json());
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/rides", rideRoutes);
-app.use("/api/drivers",driverRoutes);
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/rides", require("./routes/rideRoutes"));
+app.use("/api/drivers", require("./routes/driverRoutes"));
 
 
 
