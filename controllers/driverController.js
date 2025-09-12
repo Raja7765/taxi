@@ -86,8 +86,6 @@ const getAvailableRides = async (req, res) => {
 
 
 //accepting the ride
-
-
 const acceptRide = async (req, res) => {
   try {
     if (!req.body || !req.body.ride_id) {
