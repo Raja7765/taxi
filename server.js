@@ -5,7 +5,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const rideRoutes = require("./routes/rideRoutes");
 const driverRoutes = require("./routes/driverRoutes");
-
+const paymentsRoutes = require("../taxi/routes/paymentsRoutes")
 
 
 const app = express();
@@ -16,7 +16,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/rides", require("./routes/rideRoutes"));
 app.use("/api/drivers", require("./routes/driverRoutes"));
 
-
+app.use("/payments", require("./routes/paymentsRoutes"))
 
 
 

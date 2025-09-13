@@ -1,10 +1,10 @@
 const pool = require("../config/db");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken")
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-
-
-//Driver register
+// =======================
+// Driver Register
+// =======================
 const registerDriver = async (req, res) => {
   try {
     const { user_id, license_no, vehicle_no } = req.body;
@@ -31,15 +31,15 @@ const registerDriver = async (req, res) => {
   }
 };
 
-
-
+// =======================
 // Driver Login
+// =======================
 const loginDriver = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const result = await pool.query(
-      `SELECT d.driver_id, d.user_id, u.password 
+      `SELECT d.driver_id, d.user_id, u.password, u.email, u.role
        FROM drivers d 
        JOIN users u ON d.user_id = u.id 
        WHERE u.email = $1`,
@@ -63,17 +63,24 @@ const loginDriver = async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    res.json({ message: "Driver login successful", token });
+    res.json({
+      message: "Driver login successful",
+      token,
+      driver: {
+        driver_id: driver.driver_id,
+        user_id: driver.user_id,
+        email: driver.email,
+        role: driver.role,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-
-
-
-
-//  Get Available Rides
+// =======================
+// Get Available Rides
+// =======================
 const getAvailableRides = async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM rides WHERE status='requested'");
@@ -83,23 +90,18 @@ const getAvailableRides = async (req, res) => {
   }
 };
 
-
-
-//accepting the ride
+// =======================
+// Accept Ride
+// =======================
 const acceptRide = async (req, res) => {
   try {
-    if (!req.body || !req.body.ride_id) {
-      return res.status(400).json({ error: "ride_id is required in request body" });
-    }
-
     const { ride_id } = req.body;
-    const driver_id = req.driver?.driver_id;
+    const driver_id = req.driver?.driver_id; // comes from driverAuth middleware
 
     if (!driver_id) {
       return res.status(403).json({ error: "Driver authentication failed" });
     }
 
-    // Update ride status
     await pool.query(
       "UPDATE rides SET driver_id = $1, status = 'accepted' WHERE ride_id = $2",
       [driver_id, ride_id]
@@ -111,14 +113,12 @@ const acceptRide = async (req, res) => {
   }
 };
 
-
-
-
-
-//  Complete Ride
+// =======================
+// Complete Ride
+// =======================
 const completeRide = async (req, res) => {
-  const { ride_id } = req.body;
   try {
+    const { ride_id } = req.body;
     const result = await pool.query(
       "UPDATE rides SET status='completed' WHERE ride_id=$1 RETURNING *",
       [ride_id]
