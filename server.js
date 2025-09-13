@@ -5,7 +5,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const rideRoutes = require("./routes/rideRoutes");
 const driverRoutes = require("./routes/driverRoutes");
-const paymentsRoutes = require("../taxi/routes/paymentsRoutes")
+const paymentsRoutes = require("./routes/paymentsRoutes")
 
 
 const app = express();
