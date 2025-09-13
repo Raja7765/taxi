@@ -80,15 +80,17 @@ const loginDriver = async (req, res) => {
 
 // =======================
 // Get Available Rides
-// =======================
 const getAvailableRides = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM rides WHERE status='requested'");
+    const result = await pool.query(
+      "SELECT ride_id, pickup, dropoff, fare, status FROM rides WHERE status = 'pending'"
+    );
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // =======================
 // Accept Ride
