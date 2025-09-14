@@ -105,7 +105,7 @@ const acceptRide = async (req, res) => {
     }
 
     const result = await pool.query(
-      "UPDATE rides SET driver_id = $1, status = 'accepted' WHERE ride_id = $2 RETURNING *",
+      "UPDATE rides SET driver_id = $1, status = 'ongoing' WHERE ride_id = $2 RETURNING *",
       [driverId, ride_id]
     );
 
