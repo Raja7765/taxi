@@ -98,22 +98,27 @@ const getAvailableRides = async (req, res) => {
 const acceptRide = async (req, res) => {
   try {
     const { ride_id } = req.body;
-    const driver_id = req.driver?.driver_id; // comes from driverAuth middleware
+    const driverId = req.driver?.driver_id;
 
-    if (!driver_id) {
+    if (!driverId) {
       return res.status(403).json({ error: "Driver authentication failed" });
     }
 
-    await pool.query(
-      "UPDATE rides SET driver_id = $1, status = 'accepted' WHERE ride_id = $2",
-      [driver_id, ride_id]
+    const result = await pool.query(
+      "UPDATE rides SET driver_id = $1, status = 'accepted' WHERE ride_id = $2 RETURNING *",
+      [driverId, ride_id]
     );
 
-    res.json({ message: "Ride accepted successfully", ride_id, driver_id });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Ride not found" });
+    }
+
+    res.json({ message: "Ride accepted successfully", ride: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // =======================
 // Complete Ride
@@ -121,14 +126,29 @@ const acceptRide = async (req, res) => {
 const completeRide = async (req, res) => {
   try {
     const { ride_id } = req.body;
+    const driverId = req.driver?.driver_id;
+
+    if (!driverId) {
+      return res.status(403).json({ error: "Driver authentication failed" });
+    }
+
     const result = await pool.query(
-      "UPDATE rides SET status='completed' WHERE ride_id=$1 RETURNING *",
-      [ride_id]
+      `UPDATE rides 
+       SET status='completed' 
+       WHERE ride_id=$1 AND driver_id=$2 
+       RETURNING *`,
+      [ride_id, driverId]
     );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Ride not found or not assigned to this driver" });
+    }
+
     res.json({ message: "Ride completed", ride: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 module.exports = { registerDriver, loginDriver, getAvailableRides, acceptRide, completeRide };

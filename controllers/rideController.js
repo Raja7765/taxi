@@ -8,12 +8,12 @@ function calculateFare() {
 // Book Ride
 const bookRide = async (req, res) => {
   const { pickup, dropoff } = req.body;
-  const riderId = req.user.id; // from JWT
+  const userId = req.user.id; // from JWT
   try {
     const fare = calculateFare();
     const result = await pool.query(
-      "INSERT INTO rides (rider_id, pickup, dropoff, fare, status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [riderId, pickup, dropoff, fare, "pending"]
+      "INSERT INTO rides (user_id, pickup, dropoff, fare, status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [userId, pickup, dropoff, fare, "pending"]
     );
 
     res.status(201).json({ message: "Ride booked successfully", ride: result.rows[0] });

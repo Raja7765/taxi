@@ -2,10 +2,24 @@
 const pool = require("../config/db");
 
 // Initiate a payment when ride is completed
+// controllers/paymentsController.js
 exports.initiatePayment = async (req, res) => {
   try {
-    const { ride_id, user_id, amount } = req.body;
+    const { ride_id, amount } = req.body;
 
+    // Fetch the ride to get rider user_id
+    const rideResult = await pool.query(
+      "SELECT user_id FROM rides WHERE ride_id = $1 AND status = 'completed'",
+      [ride_id]
+    );
+
+    if (rideResult.rows.length === 0) {
+      return res.status(400).json({ error: "Ride not found or not completed" });
+    }
+
+    const user_id = rideResult.rows[0].user_id;
+
+    // Create pending payment
     const result = await pool.query(
       `INSERT INTO payments (ride_id, user_id, amount, status, created_at)
        VALUES ($1, $2, $3, 'pending', NOW())
@@ -19,6 +33,7 @@ exports.initiatePayment = async (req, res) => {
     res.status(500).json({ error: "Failed to initiate payment" });
   }
 };
+
 
 
 
