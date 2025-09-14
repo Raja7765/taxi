@@ -1,15 +1,15 @@
 // controllers/paymentsController.js
 const pool = require("../config/db");
 
-// Initiate a payment when ride is completed
-// controllers/paymentsController.js
+
+//initiate payment
 exports.initiatePayment = async (req, res) => {
   try {
-    const { ride_id, amount } = req.body;
+    const { ride_id, amount, method } = req.body;
 
-    // Fetch the ride to get rider user_id
+    // Ensure ride is completed before payment
     const rideResult = await pool.query(
-      "SELECT user_id FROM rides WHERE ride_id = $1 AND status = 'completed'",
+      "SELECT * FROM rides WHERE ride_id = $1 AND status = 'completed'",
       [ride_id]
     );
 
@@ -17,14 +17,12 @@ exports.initiatePayment = async (req, res) => {
       return res.status(400).json({ error: "Ride not found or not completed" });
     }
 
-    const user_id = rideResult.rows[0].user_id;
-
-    // Create pending payment
+    // Insert payment (status = pending)
     const result = await pool.query(
-      `INSERT INTO payments (ride_id, user_id, amount, status, created_at)
-       VALUES ($1, $2, $3, 'pending', NOW())
+      `INSERT INTO payments (ride_id, amount, method, status)
+       VALUES ($1, $2, $3, 'pending')
        RETURNING *`,
-      [ride_id, user_id, amount]
+      [ride_id, amount, method]
     );
 
     res.status(201).json({ message: "Payment initiated", payment: result.rows[0] });
@@ -38,14 +36,14 @@ exports.initiatePayment = async (req, res) => {
 
 
 
-// Confirm payment (cash/online)
+//confirm payment
 exports.confirmPayment = async (req, res) => {
   try {
     const { id } = req.params;
 
     const result = await pool.query(
-      `UPDATE payments SET status = 'paid', updated_at = NOW()
-       WHERE id = $1 RETURNING *`,
+      `UPDATE payments SET status = 'completed', paid_at = NOW()
+       WHERE payment_id = $1 RETURNING *`,
       [id]
     );
 
@@ -59,9 +57,6 @@ exports.confirmPayment = async (req, res) => {
     res.status(500).json({ error: "Failed to confirm payment" });
   }
 };
-
-
-
 
 
 // Get user payment history
