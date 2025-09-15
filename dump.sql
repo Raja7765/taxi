@@ -418,4 +418,3 @@ ALTER TABLE ONLY public.rides
 --
 
 \unrestrict YytxAE5JoWAgRddn4tTgHugpxBeDZf9GjipLN5nreBlncqUwBKaKMx7XtV91e0H
-
