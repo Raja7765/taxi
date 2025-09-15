@@ -15,7 +15,6 @@ app.use(express.json());
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/rides", require("./routes/rideRoutes"));
 app.use("/api/drivers", require("./routes/driverRoutes"));
-
 app.use("/api/payments", require("./routes/paymentsRoutes"))
 
 
