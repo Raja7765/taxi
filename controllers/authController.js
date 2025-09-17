@@ -1,5 +1,5 @@
 const pool = require("../config/db");
-const bcrypt = require("bcryptjs");   // ✅ use bcryptjs
+const bcrypt = require("bcryptjs");   // use bcryptjs
 const jwt = require("jsonwebtoken");
 
 // Signup with auto-login
